@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Exam Academy | Ancient India Quiz</title>
+    <style>
+        :root {
+            --primary-bg: #1a0b2e;
+            --gradient-bg: radial-gradient(circle at center, #2e003e 0%, #000000 100%);
+            --accent-gold: #ffbf00;
+            --accent-gold-glow: rgba(255, 191, 0, 0.4);
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --card-border: 1px solid rgba(255, 255, 255, 0.15);
+            --text-white: #ffffff;
+            --text-gray: #dddddd;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --font-main: 'Segoe UI', 'Nirmala UI', 'Mukta', 'Poppins', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Premium feel, prevents text highlighting clicks */
+        }
+
+        body {
+            background: var(--gradient-bg);
+            background-attachment: fixed;
+            font-family: var(--font-main);
+            color: var(--text-white);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Header --- */
+        .header {
+            width: 100%;
+            height: 70px;
+            background: rgba(20, 10, 30, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            border-bottom: 2px solid var(--accent-gold);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .brand-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px var(--accent-gold-glow);
+        }
+
+        .quiz-status {
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* --- Main Layout --- */
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 100px; /* Space for fixed header */
+            margin-bottom: 50px;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* --- Floating Next Button (Top Right Fixed) --- */
+        #next-btn {
+            position: fixed;
+            top: 100px; /* Just below header */
+            right: 40px;
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: 700;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--accent-gold-glow);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0; /* Hidden initially */
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+
+        #next-btn.visible {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        #next-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--accent-gold-glow);
+            background: #fff;
+        }
+
+        /* --- Question Card --- */
+        .question-card {
+            background: var(--card-bg);
+            border: var(--card-border);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .question-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+        }
+
+        .q-text {
+            font-size: 1.8rem;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: var(--text-white);
+        }
+
+        /* --- Options Area --- */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 columns for Desktop */
+            gap: 20px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            color: var(--text-white);
+            padding: 20px;
+            font-size: 1.3rem;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn .opt-marker {
+            background: rgba(255,255,255,0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: rgba(255, 191, 0, 0.1);
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        /* --- States --- */
+        .option-btn.correct {
+            background: linear-gradient(90deg, #1b5e20, #2ecc71) !important;
+            border-color: #2ecc71 !important;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+            transform: scale(1.02);
+        }
+
+        .option-btn.wrong {
+            background: linear-gradient(90deg, #621b1b, #e74c3c) !important;
+            border-color: #e74c3c !important;
+            opacity: 0.8;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        /* --- Explanation --- */
+        .explanation-box {
+            margin-top: 30px;
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 5px solid var(--success);
+            padding: 20px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .expl-title {
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .expl-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #d1f2eb;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Score Card Styling */
+        .result-container {
+            text-align: center;
+            animation: fadeIn 0.8s;
+            padding: 50px 20px;
+        }
+        .result-title {
+            font-size: 3rem;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+        }
+        .result-score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        .restart-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: var(--accent-gold);
+            color: black;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Responsive adjust for narrower screens (Laptop small) */
+        @media (max-width: 1100px) {
+            #next-btn {
+                right: 20px;
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+        /* Make grid stack on smaller tablets if needed, though desktop preferred */
+        @media (max-width: 768px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .question-card { padding: 25px; }
+            .q-text { font-size: 1.4rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Header -->
+    <header class="header">
+        <div class="brand-name">Smart Exam Academy</div>
+        <div class="quiz-status" id="status-counter">प्रश्न 1 / 43</div>
+    </header>
+
+    <!-- Fixed Next Button (Top Right) -->
+    <button id="next-btn" onclick="nextQuestion()">
+        अगला प्रश्न <span style="font-size:1.4em;">&rarr;</span>
+    </button>
+
+    <!-- Main Content Area -->
+    <div class="main-container" id="quiz-area">
+        
+        <!-- Question -->
+        <div class="question-card" id="q-card">
+            <div class="q-text" id="q-text">Loading Question...</div>
+        </div>
+
+        <!-- Options -->
+        <div class="options-grid" id="options-area">
+            <!-- Buttons injected by JS -->
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation-box" id="explanation">
+            <div class="expl-title">✅ सही उत्तर व व्याख्या:</div>
+            <div class="expl-text" id="expl-text">--</div>
+        </div>
+
+    </div>
+
+    <!-- Final Result Area (Hidden initially) -->
+    <div class="main-container" id="result-area" style="display: none;">
+        <div class="result-container">
+            <h1 class="result-title">परिणाम (Result)</h1>
+            <div style="font-size: 1.5rem; margin-bottom: 10px;">आपका स्कोर:</div>
+            <div class="result-score" id="final-score">0 / 43</div>
+            <button class="restart-btn" onclick="location.reload()">पुलः प्रयास करें</button>
+        </div>
+    </div>
+
+<script>
+    // --- Data Source (Based on provided text) ---
+    // The "correct" value is 0-based index: A=0, B=1, C=2, D=3
+    const quizData = [
+        { q: "वैदिक काल में अर्थव्यवस्था का मुख्य आधार क्या था?", options: ["कृषि", "व्यापार", "पशुपालन", "उपर्युक्त सभी"], correct: 3, note: "उत्तर: (D) उपर्युक्त सभी - वैदिक आर्यों की अर्थव्यवस्था कृषि और पशुपालन का मिश्रण थी, साथ ही सीमित व्यापार भी था।" },
+        { q: "वैदिक काल में ब्राह्मण कौन-सा कार्य करता था?", options: ["युद्ध करना", "व्यापार करना", "शिक्षा देना और पूजा-पाठ", "सेवा करना"], correct: 2, note: "उत्तर: (C) शिक्षा देना और पूजा-पाठ - वर्ण व्यवस्था में ब्राह्मणों का मुख्य कार्य वेदों का अध्ययन-अध्यापन और यज्ञ करना था।" },
+        { q: "रामायण महाकाव्य की रचना किसने की?", options: ["वेदव्यास", "महर्षि वाल्मीकि", "तुलसीदास", "कबीर"], correct: 1, note: "उत्तर: (B) महर्षि वाल्मीकि - रामायण आदि महाकाव्य के रचयिता महर्षि वाल्मीकि माने जाते हैं।" },
+        { q: "मनुस्मृति के रचयिता कौन हैं?", options: ["अगस्त्य मुनि", "ऋषि मनु", "गौतम", "नारद"], correct: 1, note: "उत्तर: (B) ऋषि मनु - मनुस्मृति प्राचीन भारतीय धर्मशास्त्र है जिसके प्रणेता ऋषि मनु हैं।" },
+        { q: "जुते हुए खेत का साक्ष्य कहाँ से मिला है?", options: ["लोथल", "मोहनजोदड़ो", "कालीबंगा", "रोपड़"], correct: 2, note: "उत्तर: (C) कालीबंगा - राजस्थान के कालीबंगा से पूर्व-हड़प्पा कालीन जुते हुए खेतों के प्रमाण मिले हैं।" },
+        { q: "ऋग्वेद में कृषि का उल्लेख कितनी बार हुआ है?", options: ["20", "24", "30", "50"], correct: 1, note: "उत्तर: (B) 24 - ऋग्वेद में कृषि संबंधी गतिविधियों का उल्लेख लगभग 24 बार मिलता है।" },
+        { q: "‘मधुलिका’ एवं ‘नंदीमुखी’ किस फसल के नाम हैं?", options: ["चावल", "जौ", "गेहूं", "मक्का"], correct: 2, note: "उत्तर: (C) गेहूं - प्राचीन ग्रंथों में गेहूं की विभिन्न किस्मों के लिए मधुलिका और नंदीमुखी नामों का प्रयोग हुआ है।" },
+        { q: "शल्य चिकित्सा (Surgery) के जनक कौन माने जाते हैं?", options: ["चरक", "सुश्रुत", "धन्वन्तरि", "पतंजलि"], correct: 1, note: "उत्तर: (B) सुश्रुत - सुश्रुत संहिता में शल्य चिकित्सा के परिष्कृत तरीकों का वर्णन है, इसलिए उन्हें शल्य चिकित्सा का जनक कहते हैं।" },
+        { q: "चिकित्सा के जनक किसे माना जाता है?", options: ["सुश्रुत", "चरक", "वाग्भट्ट", "आत्रेय"], correct: 1, note: "उत्तर: (B) चरक - आयुर्वेद चिकित्सा और कायाचिकित्सा के क्षेत्र में चरक संहिता एक आधारभूत ग्रंथ है।" },
+        { q: "रहट (सिंचाई यंत्र) का प्रथम प्रयोग किस काल में हुआ?", options: ["मौर्य काल", "गुप्त काल", "मौर्योत्तर काल", "वैदिक काल"], correct: 2, note: "उत्तर: (C) मौर्योत्तर काल - रहट या घटीयंत्र का स्पष्ट उपयोग मौर्योत्तर एवं गुप्त काल के दौरान सिंचाई तकनीकों में देखने को मिलता है।" },
+        { q: "खेती की विधि एवं उपकरणों का वर्णन ऋग्वेद के किस मंडल में है?", options: ["प्रथम", "चतुर्थ", "सप्तम", "दशम"], correct: 3, note: "उत्तर: (D) दशम - ऋग्वेद के चौथे और दशम मंडल में कृषि क्रियाओं का संकेत मिलता है, दशम मंडल विशेष महत्वपूर्ण है।" },
+        { q: "कौटिल्य का अर्थशास्त्र कितने अधिकरणों में विभाजित है?", options: ["10", "12", "15", "18"], correct: 2, note: "उत्तर: (C) 15 - अर्थशास्त्र ग्रंथ राजनीति और प्रशासन पर आधारित है और यह 15 अधिकरणों में विभक्त है।" },
+        { q: "विशाल अन्नागार और स्नानागार कहाँ से मिले हैं?", options: ["हड़प्पा", "मोहनजोदड़ो", "लोथल", "कालीबंगा"], correct: 1, note: "उत्तर: (B) मोहनजोदड़ो - मोहनजोदड़ो (मृतकों का टीला) से विशाल स्नानागार और अन्न रखने का कोठार प्राप्त हुआ है।" },
+        { q: "सिंधु घाटी सभ्यता के लोग किस धातु से अनभिज्ञ थे?", options: ["सोना", "चाँदी", "कांसा", "लोहा"], correct: 3, note: "उत्तर: (D) लोहा - सिंधु सभ्यता एक कांस्य युगीन सभ्यता थी, वहां लोहे का प्रचलन नहीं था। लोहे का प्रयोग वैदिक काल में शुरू हुआ।" },
+        { q: "हड़प्पा सभ्यता की प्रमुख मिश्र धातु कौन-सी थी?", options: ["पीतल", "कांसा", "इस्पात", "सोल्डर"], correct: 1, note: "उत्तर: (B) कांसा - तांबे और टिन को मिलाकर कांसा (Bronze) बनाया जाता था, इसी आधार पर इसे कांस्य युगीन सभ्यता कहा गया।" },
+        { q: "सिंधु घाटी का प्रमुख बंदरगाह कौन-सा था?", options: ["कालीबंगा", "मोहनजोदड़ो", "लोथल", "रोपड़"], correct: 2, note: "उत्तर: (C) लोथल - गुजरात स्थित लोथल एक प्रमुख व्यापारिक केंद्र और गोदीवाड़ा (Dockyard) था।" },
+        { q: "‘अष्टाध्यायी’ के लेखक कौन हैं?", options: ["पाणिनि", "पतंजलि", "कात्यायन", "वराहमिहिर"], correct: 0, note: "उत्तर: (A) पाणिनि - अष्टाध्यायी संस्कृत व्याकरण का एक अत्यंत प्राचीन और प्रसिद्ध ग्रंथ है।" },
+        { q: "प्राचीन भारत की अर्थव्यवस्था का मुख्य आधार क्या था?", options: ["उद्योग", "कृषि", "सेवा", "खनन"], correct: 1, note: "उत्तर: (B) कृषि - प्राचीन भारतीय समाज और आर्थिक संरचना मूलतः कृषि और उससे संबंधित कार्यों पर टिकी थी।" },
+        { q: "भूमिकर को किस नाम से जाना जाता था?", options: ["शुल्क", "बलि", "कर", "नजराना"], correct: 1, note: "उत्तर: (B) बलि - वैदिक काल में स्वैच्छिक और बाद में अनिवार्य कर के रूप में 'बलि' और 'भाग' का प्रयोग होता था।" },
+        { q: "वैदिक काल में कृषि भूमि को क्या कहा जाता था?", options: ["उर्वर", "क्षेत्र", "सीता", "हल"], correct: 1, note: "उत्तर: (B) क्षेत्र - खेती योग्य उपजाऊ भूमि को 'क्षेत्र' और किसान को 'क्षेत्रपति' कहा जाता था।" },
+        { q: "जंगलों का आर्थिक उपयोग किस हेतु होता था?", options: ["लकड़ी", "औषधि", "पशुपालन", "उपर्युक्त सभी"], correct: 3, note: "उत्तर: (D) उपर्युक्त सभी - वन संसाधन लकड़ी, औषधियाँ और पशुचारण के प्रमुख स्रोत थे।" },
+        { q: "समुद्री व्यापार का प्रारंभ किस तट से हुआ?", options: ["पूर्वी", "पश्चिमी", "दक्षिणी", "उत्तरी"], correct: 1, note: "उत्तर: (B) पश्चिमी तट - पश्चिमी तट (गुजरात, महाराष्ट्र) मेसोपोटामिया और मिस्र के साथ व्यापार का प्रमुख द्वार था।" },
+        { q: "‘सार्थवाह’ किसे कहा जाता था?", options: ["राजा", "पुजारी", "व्यापारी काफिले का नेता", "सेनापति"], correct: 2, note: "उत्तर: (C) व्यापारी काफिले का नेता - जो व्यापारियों के समूह (कारवां) का नेतृत्व और सुरक्षा प्रबंधन करता था, उसे सार्थवाह कहते थे।" },
+        { q: "मोतियों के व्यापार के लिए प्रसिद्ध बंदरगाह?", options: ["सोपारा", "लोथल", "भरूच", "मुजरिस"], correct: 1, note: "उत्तर: (B) लोथल - लोथल में मनके बनाने और बहुमूल्य रत्नों के व्यापार के पुख्ता सबूत मिले हैं।" },
+        { q: "व्यापार की देखरेख करने वाला अधिकारी कौन था?", options: ["समाहर्ता", "सन्निधाता", "पण्याध्यक्ष", "सीताध्यक्ष"], correct: 2, note: "उत्तर: (C) पण्याध्यक्ष - मौर्य प्रशासन में पण्याध्यक्ष वाणिज्य और व्यापार विभागों का अध्यक्ष होता था।" },
+        { q: "अंतर्देशीय व्यापार का प्रमुख साधन?", options: ["घोड़ा", "रथ", "बैलगाड़ी", "नाव"], correct: 2, note: "उत्तर: (C) बैलगाड़ी - देश के भीतर भारी माल ढुलाई के लिए बैलगाड़ी सबसे सस्ता और सुलभ साधन थी।" },
+        { q: "कृषि का व्यवस्थित विकास किस युग में हुआ?", options: ["पुरापाषाण", "मध्यपाषाण", "नवपाषाण", "ताम्रपाषाण"], correct: 2, note: "उत्तर: (C) नवपाषाण - मानव ने स्थाई जीवन और व्यवस्थित कृषि की शुरुआत नवपाषाण काल (Neolithic Age) में की।" },
+        { q: "‘ग्राम’ का अर्थ क्या है?", options: ["जंगल", "कृषि आधारित बसावट", "औद्योगिक क्षेत्र", "व्यापारिक केंद्र"], correct: 1, note: "उत्तर: (B) कृषि आधारित बसावट - परिवारों का समूह जो कृषि कार्य से जुड़ा होता था, ग्राम कहलाता था।" },
+        { q: "समुद्री व्यापार का मुख्य निर्यात क्या था?", options: ["सोना", "मशीनरी", "सूती कपड़े व मसाले", "पेट्रोलियम"], correct: 2, note: "उत्तर: (C) सूती कपड़े व मसाले - भारत से मसालों, सूती वस्त्रों, और कीमती पत्थरों का निर्यात पश्चिम के देशों को होता था।" },
+        { q: "उद्योग एवं वाणिज्य को किस नाम से जाना जाता था?", options: ["शिल्प", "कर्म", "वार्ता", "वृत्ति"], correct: 0, note: "उत्तर: (A) शिल्प - उत्पादन संबंधी कार्य और दस्तकारी को सामान्यतः शिल्प श्रेणी में रखा जाता था।" },
+        { q: "प्रमुख समुद्री व्यापारिक नगर कौन-सा था?", options: ["पाटलिपुत्र", "तक्षशिला", "ताम्रलिप्ति", "वाराणसी"], correct: 2, note: "उत्तर: (C) ताम्रलिप्ति - पूर्वी तट पर स्थित ताम्रलिप्ति एक प्राचीन प्रमुख बंदरगाह और व्यापारिक केंद्र था।" },
+        { q: "दैनिक क्रियाएँ मुख्यतः किस विषय से संबंधित होती हैं?", options: ["इतिहास", "भूगोल", "गणित", "विज्ञान"], correct: 2, note: "उत्तर: (C) गणित - काल गणना, मापतौल और निर्माण जैसे दैनिक कार्यों में गणित की अहम भूमिका थी।" },
+        { q: "‘आर्यभट्टीयम्’ के लेखक कौन हैं?", options: ["वराहमिहिर", "आर्यभट्ट", "ब्रह्मगुप्त", "भास्कराचार्य"], correct: 1, note: "उत्तर: (B) आर्यभट्ट - गुप्तकालीन महान गणितज्ञ आर्यभट्ट ने आर्यभट्टीयम् की रचना की।" },
+        { q: "चिकित्सा एवं औषधियों का प्रथम उल्लेख किस वेद में है?", options: ["ऋग्वेद", "यजुर्वेद", "सामवेद", "अथर्ववेद"], correct: 3, note: "उत्तर: (D) अथर्ववेद - अथर्ववेद में रोगों के निवारण, जड़ी-बूटियों और चिकित्सा पद्धतियों का विषद वर्णन है।" },
+        { q: "‘पाई’ (π) के मान की गणना किसने की?", options: ["आर्यभट्ट", "बौधायन", "कात्यायन", "आपस्तम्ब"], correct: 1, note: "उत्तर: (B) बौधायन - शुल्व सूत्र में बौधायन ने ज्यामितीय गणनाओं और आनुपातिक मानों (जिनमें पाई के करीब मान शामिल हैं) पर कार्य किया था। (नोट: सटीक दशमलव मान आर्यभट्ट ने भी दिया था, परन्तु प्राचीन ज्यामिति में बौधायन का नाम शुल्व सूत्रों हेतु आता है)।" },
+        { q: "‘आर्यभट्टीयम्’ में कितने श्लोक हैं?", options: ["100", "120", "150", "162"], correct: 3, note: "उत्तर: (D) 162 - आर्यभट्टीयम् संक्षिप्त ग्रंथ है जिसमें गणित और खगोल विज्ञान पर आधारित श्लोकों की संख्या लगभग 162 है।" },
+        { q: "‘आर्यभट्टीयम्’ कितने खंडों में विभाजित है?", options: ["3", "4", "5", "6"], correct: 2, note: "उत्तर: (C) 5 - इसे आमतौर पर दशगीतिका, गणितपाद, कालक्रियापाद और गोलपाद (और मूल परिचय) जैसे भागों में देखा जाता है।" },
+        { q: "‘गणचक्रचूड़ामणि’ की उपाधि किसे दी गई?", options: ["वराहमिहिर", "ब्रह्मगुप्त", "आर्यभट्ट", "महावीराचार्य"], correct: 2, note: "उत्तर: (C) आर्यभट्ट - गुप्त काल के खगोलविदों में श्रेष्ठ होने के कारण इन्हें यह सम्मानजनक उपाधि प्राप्त है।" },
+        { q: "‘तहकीक-ए-हिंद’ के लेखक कौन हैं?", options: ["इब्न बतूता", "अलबरूनी", "अमीर खुसरो", "फिरदौसी"], correct: 1, note: "उत्तर: (B) अलबरूनी - यह प्रसिद्ध अरबी विद्वान महमूद गजनवी के साथ भारत आया और 'किताब-उल-हिंद' (तहकीक-ए-हिंद) लिखी।" },
+        { q: "‘सिद्धांत शिरोमणि’ की रचना किसने की?", options: ["आर्यभट्ट", "महावीराचार्य", "भास्कराचार्य", "वराहमिहिर"], correct: 2, note: "उत्तर: (C) भास्कराचार्य - 12वीं सदी में रचित सिद्धांत शिरोमणि (जिसमें लीलावती भी शामिल है) भास्कराचार्य द्वितीय की रचना है।" },
+        { q: "‘गणित सार संग्रह’ के लेखक कौन हैं?", options: ["श्रीधराचार्य", "महावीराचार्य", "ब्रह्मगुप्त", "आर्यभट्ट द्वितीय"], correct: 1, note: "उत्तर: (B) महावीराचार्य - 9वीं शताब्दी के जैन गणितज्ञ महावीराचार्य ने इस ग्रंथ की रचना की थी।" },
+        { q: "‘New Science of Healing’ के लेखक कौन हैं?", options: ["लुई कोने", "एडोल्फ जस्ट", "हिप्पोक्रेट्स", "अरस्तु"], correct: 0, note: "उत्तर: (A) लुई कोने - प्राकृतिक चिकित्सा पर आधारित यह पुस्तक लुई कोने द्वारा लिखी गई है।" },
+        { q: "‘Return to Nature’ पुस्तक किसकी है?", options: ["महात्मा गांधी", "रूसो", "एडोल्फ जस्ट", "लुई कोने"], correct: 2, note: "उत्तर: (C) एडोल्फ जस्ट - यह पुस्तक प्राकृतिक जीवन शैली की ओर लौटने (Return to Nature) पर बल देती है।" }
+    ];
+
+    // --- State Variables ---
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isQuestionAnswered = false;
+
+    // --- DOM Elements ---
+    const dom = {
+        questionText: document.getElementById("q-text"),
+        optionsArea: document.getElementById("options-area"),
+        counter: document.getElementById("status-counter"),
+        explBox: document.getElementById("explanation"),
+        explText: document.getElementById("expl-text"),
+        nextBtn: document.getElementById("next-btn"),
+        quizArea: document.getElementById("quiz-area"),
+        resultArea: document.getElementById("result-area"),
+        finalScore: document.getElementById("final-score")
+    };
+
+    // --- Core Functions ---
+
+    function initQuiz() {
+        loadQuestion(currentQuestionIndex);
+    }
+
+    function loadQuestion(index) {
+        // Reset UI State
+        isQuestionAnswered = false;
+        dom.explBox.style.display = "none";
+        dom.nextBtn.classList.remove("visible");
+        
+        // Ensure Transition runs (small hack: opacity toggle)
+        dom.questionText.style.opacity = 0;
+        
+        setTimeout(() => {
+            // Load Content
+            const data = quizData[index];
+            dom.counter.textContent = `प्रश्न ${index + 1} / ${quizData.length}`;
+            dom.questionText.textContent = `प्र. ${data.q}`;
+            dom.questionText.style.opacity = 1;
+            
+            // Build Options
+            dom.optionsArea.innerHTML = "";
+            const labels = ["A", "B", "C", "D"];
+            
+            data.options.forEach((opt, i) => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                // Animation Delay for staggered entry
+                btn.style.animation = `slideIn 0.3s ease forwards ${i * 0.1}s`;
+                btn.onclick = () => selectOption(i, btn);
+                
+                const marker = document.createElement("div");
+                marker.className = "opt-marker";
+                marker.textContent = labels[i];
+                
+                const textSpan = document.createElement("span");
+                textSpan.textContent = opt;
+                
+                btn.appendChild(marker);
+                btn.appendChild(textSpan);
+                dom.optionsArea.appendChild(btn);
+            });
+            
+            // Scroll slightly up if explanation pushed down
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 200);
+    }
+
+    function selectOption(selectedIndex, btnElement) {
+        if (isQuestionAnswered) return;
+        isQuestionAnswered = true;
+
+        const data = quizData[currentQuestionIndex];
+        const correctIndex = data.correct;
+        const allButtons = document.querySelectorAll(".option-btn");
+
+        // Logic
+        if (selectedIndex === correctIndex) {
+            score++;
+            btnElement.classList.add("correct");
+        } else {
+            btnElement.classList.add("wrong");
+            // Highlight the correct one
+            allButtons[correctIndex].classList.add("correct");
+        }
+
+        // Disable all clicks
+        allButtons.forEach(btn => btn.disabled = true);
+
+        // Show Explanation
+        dom.explText.textContent = data.note;
+        dom.explBox.style.display = "block";
+
+        // Show Next Button (Fixed Top-Right)
+        dom.nextBtn.classList.add("visible");
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            // Transition Out
+            dom.quizArea.style.opacity = "0";
+            dom.quizArea.style.transform = "translateY(20px)";
+            dom.quizArea.style.transition = "opacity 0.3s, transform 0.3s";
+
+            setTimeout(() => {
+                loadQuestion(currentQuestionIndex);
+                dom.quizArea.style.opacity = "1";
+                dom.quizArea.style.transform = "translateY(0)";
+            }, 300);
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        dom.quizArea.style.display = "none";
+        dom.nextBtn.style.display = "none"; // Hide floating button at end
+        dom.resultArea.style.display = "block";
+        dom.finalScore.textContent = `${score} / ${quizData.length}`;
+        
+        // Add color based on score
+        const percentage = (score / quizData.length) * 100;
+        if(percentage > 80) dom.finalScore.style.color = "#2ecc71";
+        else if(percentage > 50) dom.finalScore.style.color = "#f1c40f";
+        else dom.finalScore.style.color = "#e74c3c";
+    }
+
+    // --- Start ---
+    initQuiz();
+
+</script>
+</body>
+</html>
